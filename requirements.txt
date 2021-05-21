@@ -1,7 +1,5 @@
 flask
 moviepy
-pandas
-praw
 requests
 opencv-python-headless
 av

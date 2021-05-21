@@ -15,7 +15,7 @@ import os
 app = Flask(__name__)
 
 def printErrorMessage (exception, path):
-    	logging.info (f"had trouble editing post")
+	logging.info (f"had trouble editing post")
 	logging.info (f"path: {path}")
 	logging.info (f"exception: {exception}")
 
@@ -188,8 +188,7 @@ def editPost ():
 			video = bucket.blob (f"final_vids/{post['title']}")
 			video.delete()
 		except Exception as e:
-			print ("could not delete video")
-			print ("error:", e)
+			printErrorMessage ("could not delete video", raw_post_path)
 
 		# update firebase with new final
 		final_vid_blob = bucket.blob(f"final_vids/{post['title']}")
