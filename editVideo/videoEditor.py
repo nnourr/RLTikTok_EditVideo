@@ -22,6 +22,13 @@ def printErrorMessage (exception, path):
 # this function will edit the videos
 @app.route('/', methods = ["POST"])
 def editPost ():
+	# setting up google
+	root = Path(__file__).parent
+	os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(root, "rltiktok-firebase-adminsdk-68zrf-ec1ecfa21d.json")
+	firebase_storage = storage.Client()
+	bucket = firebase_storage.bucket("rltiktok.appspot.com")
+	firestore_db = firestore.Client().collection (u"post_info")
+	
 	# just some some feedback
 	logging.info ("editing post...")
 
@@ -29,29 +36,33 @@ def editPost ():
 	request_data = request.get_data(silent = True)
 	try:
 		meme = int(request_data ["meme"])
-		image = int(request_data ["image"])
-		raw_post_url = request_data ["raw_post_url"]
+
+		if "raw_post_url" in request_data:
+    			re_edit = False
+			raw_post_url = request_data ["raw_post_url"]
+			image = int(request_data ["image"])
+			document = firestore_db.where ("filepath", "==", raw_post_url).limit(1).get()[0]
+		else:
+    			re_edit = True
+			source = request_data ["source"]
+			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
+			raw_post_url = document.data.to_dict()["url"]
+			image = int (document.data.to_dict()["image"])
+				
 		if "tolerance1" in request_data:
-			tolerance1 = request_data ["tolerance1"]
+    			tolerance1 = request_data ["tolerance1"]
 			tolerance2 = request_data ["tolerance2"]
 	except:
 		return "wrong request format", 400
 
 	# defining paths
-	root = Path(__file__).parent
 	music_path = os.path.join (root, "music")
 	goal_path = os.path.join (root, "goalSounds")
 	template_path = os.path.join (root, "templates")
 	raw_post_path = os.path.join (root, "temp_raw")
 	final_video_path = os.path.join (root, "temp_final")
 
-	# setting up google
-	os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(root, "rltiktok-firebase-adminsdk-68zrf-ec1ecfa21d.json")
-	firebase_storage = storage.Client()
-	bucket = firebase_storage.bucket("rltiktok.appspot.com")
-	firestore_db = firestore.Client().collection (u"post_info")
-
-	# download the raw vid
+	# downloading the raw video
 	for _ in range (0, 5): 
 		try:
 			urlretrieve(raw_post_url, raw_post_path)
@@ -169,7 +180,6 @@ def editPost ():
 
 	# write video to file and check if successful
 	final_video.write_videofile(final_video_path, bitrate = "4000k")
-
 	# checking if the final video was created successfully
 	if os.path.exists (final_video_path):
 		# delete old raw post
@@ -183,20 +193,28 @@ def editPost ():
 		except:
 			pass
 
+	else:
+		printErrorMessage ("final vid not created", raw_post_path)
+		endscreen.close()
+		post.close()
+		return -1
+
+	# do this if we are re-editing
+	if re_edit:
+		post_title = document.to_dict()["title"]
 		# delete old final from storage
 		try:
-			video = bucket.blob (f"final_vids/{post['title']}")
+			video = bucket.blob (f"final_vids/{post_title}")
 			video.delete()
 		except Exception as e:
 			printErrorMessage ("could not delete video", raw_post_path)
 
 		# update firebase with new final
-		final_vid_blob = bucket.blob(f"final_vids/{post['title']}")
+		final_vid_blob = bucket.blob(f"final_vids/{post_title}")
 		final_vid_blob.upload_from_filename(final_video_path)
 		final_vid_blob.make_public()
 		new_source = final_vid_blob.generate_signed_url(expiration=timedelta(weeks = 4))
 
-		document = firestore_db.where ("filepath", "==", raw_post_url).limit(1).get()[0]
 		document.reference.update ({"filepath": new_source})
 
 		try:
@@ -205,12 +223,9 @@ def editPost ():
 		except:
 			pass
 		return new_source
-
 	else:
-		printErrorMessage ("final vid not created", raw_post_path)
-		endscreen.close()
-		post.close()
-		return -1
+		return 1
+
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0',port=int(os.environ.get('PORT',8080)))
