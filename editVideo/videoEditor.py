@@ -40,7 +40,10 @@ def editPost ():
 		if "raw_post_url" in request_data:
 			re_edit = False
 			raw_post_url = request_data ["raw_post_url"]
-			image = int(request_data ["image"])
+			try:
+				image = request_data["image"]
+			except:
+				image = None
 			document = firestore_db.where ("filepath", "==", raw_post_url).limit(1).get()[0]
 		else:
 			re_edit = True
@@ -63,8 +66,11 @@ def editPost ():
 	music_path = os.path.join (root, "music")
 	goal_path = os.path.join (root, "goalSounds")
 	template_path = os.path.join (root, "templates")
-	raw_post_path = os.path.join (root, "temp_raw")
-	final_video_path = os.path.join (root, "temp_final")
+	if not image:
+		raw_post_path = os.path.join (root, "temp_raw.mp4")
+	else:
+		raw_post_path = os.path.join (root, "temp_raw"+str(image))
+	final_video_path = os.path.join (root, "temp_final.mp4")
 
 	# downloading the raw video
 	for _ in range (0, 5): 
