@@ -223,6 +223,7 @@ def editPost ():
 			os.remove (raw_post_path)
 		except:
 			pass
+		print (new_source)
 		return new_source
 	else:
 		return 1
