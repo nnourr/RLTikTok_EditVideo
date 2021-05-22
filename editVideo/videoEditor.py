@@ -34,7 +34,6 @@ def editPost ():
 
 	# parsing and validating data from the request
 	request_data = request.values
-	print (request_data)
 	try:
 		meme = int(request_data ["meme"])
 
@@ -47,8 +46,8 @@ def editPost ():
 			re_edit = True
 			source = request_data ["source"]
 			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
-			raw_post_url = document.data.to_dict()["url"]
-			image = int (document.data.to_dict()["image"])
+			raw_post_url = document.to_dict()["url"]
+			image = int (document.to_dict()["image"])
 				
 		if "tolerance1" in request_data:
 			tolerance1 = request_data ["tolerance1"]
