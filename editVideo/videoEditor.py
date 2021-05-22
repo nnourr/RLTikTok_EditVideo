@@ -47,8 +47,11 @@ def editPost ():
 			source = request_data ["source"]
 			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
 			raw_post_url = document.to_dict()["url"]
-			image = int (document.to_dict()["image"])
-				
+			try:
+				image = document.to_dict()["image"]
+			except:
+				image = None	
+			
 		if "tolerance1" in request_data:
 			tolerance1 = request_data ["tolerance1"]
 			tolerance2 = request_data ["tolerance2"]
