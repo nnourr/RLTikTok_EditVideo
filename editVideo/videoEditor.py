@@ -38,19 +38,19 @@ def editPost ():
 		meme = int(request_data ["meme"])
 
 		if "raw_post_url" in request_data:
-    			re_edit = False
+			re_edit = False
 			raw_post_url = request_data ["raw_post_url"]
 			image = int(request_data ["image"])
 			document = firestore_db.where ("filepath", "==", raw_post_url).limit(1).get()[0]
 		else:
-    			re_edit = True
+			re_edit = True
 			source = request_data ["source"]
 			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
 			raw_post_url = document.data.to_dict()["url"]
 			image = int (document.data.to_dict()["image"])
 				
 		if "tolerance1" in request_data:
-    			tolerance1 = request_data ["tolerance1"]
+			tolerance1 = request_data ["tolerance1"]
 			tolerance2 = request_data ["tolerance2"]
 	except:
 		return "wrong request format", 400
