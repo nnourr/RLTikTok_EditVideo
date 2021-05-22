@@ -1,6 +1,7 @@
 flask
 moviepy
 pandas
+Flask-Cors
 requests
 opencv-python-headless
 av

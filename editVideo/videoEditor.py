@@ -4,6 +4,7 @@ from flask import Flask, request
 from RLGoalFrame import findGoal
 from datetime import timedelta
 import moviepy.editor as mpe 
+from flask_cors import CORS
 from pathlib import Path
 from time import sleep
 import pandas as pd
@@ -13,6 +14,7 @@ import os
 
 # uhhh yup this is a web app yup yup mmhmmm
 app = Flask(__name__)
+CORS(app)
 
 def printErrorMessage (exception, path):
 	print (f"had trouble editing post")
