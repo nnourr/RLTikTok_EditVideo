@@ -192,16 +192,7 @@ def editPost ():
 	final_video.write_videofile(final_video_path, bitrate = "4000k")
 	# checking if the final video was created successfully
 	if os.path.exists (final_video_path):
-		# delete old raw post
-		try:
-			os.remove(raw_post_path)
-		except:
-			pass
-		# delete the local final vid
-		try:
-			os.remove (final_video_path)
-		except:
-			pass
+		print ("successfully edited video!")
 
 	else:
 		printErrorMessage ("final vid not created", raw_post_path)
