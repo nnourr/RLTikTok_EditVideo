@@ -33,7 +33,7 @@ def editPost ():
 	logging.info ("editing post...")
 
 	# parsing and validating data from the request
-	request_data = request.get_data(silent = True)
+	request_data = request.get_data()
 	try:
 		meme = int(request_data ["meme"])
 
