@@ -8,6 +8,7 @@ from pathlib import Path
 from time import sleep
 import pandas as pd
 import random
+import json
 import os
 
 # uhhh yup this is a web app yup yup mmhmmm
@@ -32,7 +33,7 @@ def editPost ():
 	print ("editing post...")
 
 	# parsing and validating data from the request
-	request_data = request.get_json(silent=True)
+	request_data = json.loads(request.get_data(silent=True))
 	print (request_data)
 	try:
 		meme = int(request_data ["meme"])
