@@ -7,7 +7,6 @@ import moviepy.editor as mpe
 from pathlib import Path
 from time import sleep
 import pandas as pd
-import logging
 import random
 import os
 
@@ -15,9 +14,9 @@ import os
 app = Flask(__name__)
 
 def printErrorMessage (exception, path):
-	logging.info (f"had trouble editing post")
-	logging.info (f"path: {path}")
-	logging.info (f"exception: {exception}")
+	print (f"had trouble editing post")
+	print (f"path: {path}")
+	print (f"exception: {exception}")
 
 # this function will edit the videos
 @app.route('/', methods = ["POST"])
@@ -30,7 +29,7 @@ def editPost ():
 	firestore_db = firestore.Client().collection (u"post_info")
 	
 	# just some some feedback
-	logging.info ("editing post...")
+	print ("editing post...")
 
 	# parsing and validating data from the request
 	request_data = request.get_data()
@@ -53,7 +52,8 @@ def editPost ():
 		if "tolerance1" in request_data:
 			tolerance1 = request_data ["tolerance1"]
 			tolerance2 = request_data ["tolerance2"]
-	except:
+	except Exception as e:
+		print ("error", e)
 		return "wrong request format", 400
 
 	# defining paths
@@ -88,7 +88,7 @@ def editPost ():
 		music = mpe.AudioFileClip(os.path.join (music_path, str(songs_info.at[music_selector, 'name'])))
 
 		if post.duration > 45:
-			logging.info ("this clip was too long")
+			print ("this clip was too long")
 			post.close()
 			return -1  
 
@@ -108,7 +108,7 @@ def editPost ():
 
 				#  if post is too long and boring
 				if post.duration > 35:
-					logging.info ("this clip was too long")
+					print ("this clip was too long")
 					post.close()
 					return -1  
 
@@ -138,7 +138,7 @@ def editPost ():
 		else:
 			post = post.resize (width = 1080)
 			if post.duration > 45:
-				logging.info ("this clip was too long")
+				print ("this clip was too long")
 				post.close()
 				return -1
 			# set the default audio
