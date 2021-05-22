@@ -33,7 +33,7 @@ def editPost ():
 	print ("editing post...")
 
 	# parsing and validating data from the request
-	request_data = json.loads(request.get_data(silent=True))
+	request_data = request.values
 	print (request_data)
 	try:
 		meme = int(request_data ["meme"])
