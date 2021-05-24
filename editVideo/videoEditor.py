@@ -46,7 +46,6 @@ def editPost ():
 				image = request_data["image"]
 			except:
 				image = None
-			document = firestore_db.where ("filepath", "==", raw_post_url).limit(1).get()[0]
 		else:
 			re_edit = True
 			source = request_data ["source"]
@@ -220,15 +219,16 @@ def editPost ():
 
 		document.reference.update ({"filepath": new_source})
 
-		try:
-			os.remove (final_video_path)
-			os.remove (raw_post_path)
-		except:
-			pass
-		print (new_source)
-		return new_source
-	else:
-		return 1
+	try:
+		os.remove (final_video_path)
+	except:
+		pass
+	try:
+		os.remove (raw_post_path)
+	except:
+		pass
+
+	return new_source
 
 
 if __name__ == "__main__":
