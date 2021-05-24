@@ -42,6 +42,7 @@ def editPost ():
 		if "raw_post_url" in request_data:
 			re_edit = False
 			raw_post_url = request_data ["raw_post_url"]
+			post_title = request_data ["post_title"]
 			try:
 				image = request_data["image"]
 			except:
@@ -201,6 +202,21 @@ def editPost ():
 		post.close()
 		return -1
 
+	# update firebase with new final
+	final_vid_blob = bucket.blob(f"final_vids/{post_title}")
+	final_vid_blob.upload_from_filename(final_video_path)
+	final_vid_blob.make_public()
+	new_source = final_vid_blob.generate_signed_url(expiration=timedelta(weeks = 4))
+	
+	try:
+		os.remove (final_video_path)
+	except:
+		pass
+	try:
+		os.remove (raw_post_path)
+	except:
+		pass
+
 	# do this if we are re-editing
 	if re_edit:
 		post_title = document.to_dict()["title"]
@@ -211,22 +227,8 @@ def editPost ():
 		except Exception as e:
 			printErrorMessage ("could not delete video", raw_post_path)
 
-		# update firebase with new final
-		final_vid_blob = bucket.blob(f"final_vids/{post_title}")
-		final_vid_blob.upload_from_filename(final_video_path)
-		final_vid_blob.make_public()
-		new_source = final_vid_blob.generate_signed_url(expiration=timedelta(weeks = 4))
-
 		document.reference.update ({"filepath": new_source})
 
-	try:
-		os.remove (final_video_path)
-	except:
-		pass
-	try:
-		os.remove (raw_post_path)
-	except:
-		pass
 
 	return new_source
 
