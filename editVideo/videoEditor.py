@@ -39,6 +39,8 @@ def editPost ():
 	print (request_data)
 	try:
 		meme = int(request_data ["meme"])
+		tolerance1 = request_data ["tolerance1"]
+		tolerance2 = request_data ["tolerance2"]
 
 		if "raw_post_url" in request_data:
 			re_edit = False
@@ -57,10 +59,6 @@ def editPost ():
 				image = document.to_dict()["image"]
 			except:
 				image = None	
-			
-		if "tolerance1" in request_data:
-			tolerance1 = request_data ["tolerance1"]
-			tolerance2 = request_data ["tolerance2"]
 	except Exception as e:
 		print ("error", e)
 		return "wrong request format", 400
