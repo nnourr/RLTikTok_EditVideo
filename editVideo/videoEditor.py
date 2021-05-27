@@ -55,6 +55,7 @@ def editPost ():
 			source = request_data ["source"]
 			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
 			raw_post_url = document.to_dict()["url"]
+			post_title = document.to_dict()["title"]
 			try:
 				image = document.to_dict()["image"]
 			except:
@@ -127,7 +128,6 @@ def editPost ():
 				fx_sound = mpe.AudioFileClip(os.path.join(goal_path, f'sfx{fx_selector}.mp3')).volumex(0.4)
 
 				# select an load a goal sound to play at goal
-				# TO DO: ADD MORE GOAL SOUNDS
 				goal_sound = mpe.AudioFileClip(os.path.join(goal_path, 'goal0.mp3')).volumex(0.4)
 
 				# trim the music to drop when the goal is scored
@@ -201,11 +201,24 @@ def editPost ():
 		post.close()
 		return -1
 
+	# do this if we are re-editing
+	if re_edit:
+		# delete old final from storage
+		try:
+			video = bucket.blob (f"final_vids/{post_title}")
+			video.delete()
+		except Exception as e:
+			printErrorMessage ("could not delete video", raw_post_path)
+
+
 	# update firebase with new final
 	final_vid_blob = bucket.blob(f"final_vids/{post_title}")
 	final_vid_blob.upload_from_filename(final_video_path)
 	final_vid_blob.make_public()
 	new_source = final_vid_blob.generate_signed_url(expiration=timedelta(weeks = 4))
+
+	if re_edit:
+		document.reference.update ({"filepath": new_source}) 
 	
 	try:
 		os.remove (final_video_path)
@@ -216,17 +229,6 @@ def editPost ():
 	except:
 		pass
 
-	# do this if we are re-editing
-	if re_edit:
-		post_title = document.to_dict()["title"]
-		# delete old final from storage
-		try:
-			video = bucket.blob (f"final_vids/{post_title}")
-			video.delete()
-		except Exception as e:
-			printErrorMessage ("could not delete video", raw_post_path)
-
-		document.reference.update ({"filepath": new_source})
 
 
 	return new_source
