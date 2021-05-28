@@ -56,6 +56,7 @@ def editPost ():
 			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
 			raw_post_url = document.to_dict()["url"]
 			post_title = document.to_dict()["title"]
+			print (post_title)
 			try:
 				image = document.to_dict()["image"]
 			except:
