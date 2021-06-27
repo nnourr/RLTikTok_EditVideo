@@ -95,6 +95,7 @@ def editPost ():
 			printErrorMessage (e, raw_post_path)
 			return -1
 
+		post = post.resize (width = 1080)
 		# select and load music to add to clip
 		music_selector = random.randint(0, (songs_info.shape[0]-1))
 		music = mpe.AudioFileClip(os.path.join (music_path, str(songs_info.at[music_selector, 'name'])))
@@ -141,13 +142,9 @@ def editPost ():
 			else:
 				# set up a generic drop time of 5 seconds
 				music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - 5), music.duration)
-
-			# resize the post to fill screen
-			post = post.resize (height = 1920)
 			
 		# if a meme
 		else:
-			post = post.resize (width = 1080)
 			if post.duration > 45:
 				print ("this clip was too long")
 				post.close()
@@ -177,7 +174,7 @@ def editPost ():
 	post_duration = post.duration
 
 	# get the endscreen
-	endscreen = mpe.VideoFileClip(os.path.join(template_path, "endScreen.mp4")).resize(width = 1060)
+	endscreen = mpe.VideoFileClip(os.path.join(template_path, "endScreen.mp4")).resize(width = 1080)
 
 	# add the endscreen to end of post
 	final_video = mpe.CompositeVideoClip([post.set_position("center"), endscreen.set_start(post.duration)], size = (1080,1920), bg_color = (0,0,0)).set_fps(post.fps)
