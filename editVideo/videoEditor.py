@@ -1,4 +1,3 @@
-from google.cloud import storage, firestore
 from urllib.request import urlretrieve
 from flask import Flask, request
 from RLGoalFrame import findGoal
@@ -26,151 +25,66 @@ def printErrorMessage (exception, path):
 def editPost ():
 	# setting up google
 	root = Path(__file__).parent
-	os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(root, "rltiktok-firebase-adminsdk-68zrf-ec1ecfa21d.json")
-	firebase_storage = storage.Client()
-	bucket = firebase_storage.bucket("rltiktok.appspot.com")
-	firestore_db = firestore.Client().collection (u"post_info")
 	
 	# just some some feedback
 	print ("editing post...")
 
-	# parsing and validating data from the request
-	request_data = request.values
-	print (request_data)
-	try:
-		meme = int(request_data ["meme"])
-		tolerance1 = request_data ["tolerance1"]
-		tolerance2 = request_data ["tolerance2"]
-
-		if "raw_post_url" in request_data:
-			re_edit = False
-			raw_post_url = request_data ["raw_post_url"]
-			post_title = request_data ["post_title"]
-			try:
-				image = request_data["image"]
-			except:
-				image = None
-		else:
-			re_edit = True
-			source = request_data ["source"]
-			document = firestore_db.where ("filepath", "==", source).limit(1).get()[0]
-			raw_post_url = document.to_dict()["url"]
-			post_title = document.to_dict()["title"]
-			print (post_title)
-			try:
-				image = document.to_dict()["image"]
-			except:
-				image = None	
-	except Exception as e:
-		print ("error", e)
-		return "wrong request format", 400
-
-	# defining paths
-	music_path = os.path.join (root, "music")
-	goal_path = os.path.join (root, "goalSounds")
-	template_path = os.path.join (root, "templates")
-	if not image:
-		raw_post_path = os.path.join (root, "temp_raw.mp4")
-	else:
-		raw_post_path = os.path.join (root, "temp_raw"+str(image))
-	final_video_path = os.path.join (root, "temp_final.mp4")
-
-	# downloading the raw video
-	for _ in range (0, 5): 
-		try:
-			urlretrieve(raw_post_url, raw_post_path)
-			break 
-		except:
-			sleep (5)
-
+	music_path = 'C:\Users\User\Documents\CIS3760\prez\RLTikTok_EditVideo\editVideo\music'
 	# reading songs csv
 	songs_info = pd.read_csv(os.path.join(music_path, "musicInfo.csv"))
 
+	raw_post_path = ''
+
 	# if post is a video
-	if (not image):
-		# try to open it
-		try:
-			post = mpe.VideoFileClip(raw_post_path)
-		except Exception as e:
-			printErrorMessage (e, raw_post_path)
-			return -1
+	post = mpe.VideoFileClip(raw_post_path)
 
-		post = post.resize (width = 1080)
-		# select and load music to add to clip
-		music_selector = random.randint(0, (songs_info.shape[0]-1))
-		music = mpe.AudioFileClip(os.path.join (music_path, str(songs_info.at[music_selector, 'name'])))
+	post = post.resize (width = 1080)
+	# select and load music to add to clip
+	music_selector = random.randint(0, (songs_info.shape[0]-1))
+	music = mpe.AudioFileClip(os.path.join (music_path, str(songs_info.at[music_selector, 'name'])))
 
-		if post.duration > 45:
-			print ("this clip was too long")
-			post.close()
-			return -1  
+	if post.duration > 45:
+		print ("this clip was too long")
+		post.close()
+		return -1  
 
-		# check if post is not a meme
-		if (not meme):
-			# attempt to find the goal
-			goal_time = findGoal(raw_post_path, tolerance1, tolerance2) / 30
+	# check if post is not a meme
+	if (not meme):
+		# attempt to find the goal
+		goal_time = findGoal(raw_post_path, tolerance1, tolerance2) / 30
 
-			# if a goal was found
-			if goal_time != 0:
-	
-				if goal_time > 10:
-					prev_duration = post.duration
-					post = post.subclip((goal_time - 10), post.duration)
-					after_duration = post.duration
-					goal_time -= (prev_duration - after_duration)
+		# if a goal was found
+		if goal_time != 0:
 
-				#  if post is too long and boring
-				if post.duration > 35:
-					print ("this clip was too long")
-					post.close()
-					return -1  
+			if goal_time > 10:
+				prev_duration = post.duration
+				post = post.subclip((goal_time - 10), post.duration)
+				after_duration = post.duration
+				goal_time -= (prev_duration - after_duration)
 
-				# select and load an effect to add to goal
-				fx_selector = random.randint(0,1)
-				fx_sound = mpe.AudioFileClip(os.path.join(goal_path, f'sfx{fx_selector}.mp3')).volumex(0.4)
-
-				# select an load a goal sound to play at goal
-				goal_sound = mpe.AudioFileClip(os.path.join(goal_path, 'goal0.mp3')).volumex(0.4)
-
-				# trim the music to drop when the goal is scored
-				music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - goal_time), music.duration)
-
-				# add the effects
-				music = mpe.CompositeAudioClip([music, goal_sound.set_start(goal_time), fx_sound.set_start(goal_time)])
-
-			# if a goal wasn't found
-			else:
-				# set up a generic drop time of 5 seconds
-				music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - 5), music.duration)
-			
-		# if a meme
-		else:
-			if post.duration > 45:
+			#  if post is too long and boring
+			if post.duration > 35:
 				print ("this clip was too long")
 				post.close()
-				return -1
-			# set the default audio
-			if post.audio == None:
-				default_audio = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - 5), music.duration)
-			else:
-				default_audio = post.audio
+				return -1  
 
-	# post is an image
-	else:
-		# try to open it
-		try:
-			post = mpe.ImageClip (raw_post_path).set_fps(30).set_duration(10).resize (width = 1080)
-		except Exception as e:
-			printErrorMessage(e, raw_post_path)
-			return -1
+			# select and load an effect to add to goal
+			fx_selector = random.randint(0,1)
+			fx_sound = mpe.AudioFileClip(os.path.join(goal_path, f'sfx{fx_selector}.mp3')).volumex(0.4)
 
-		# select and load music to add to clip
-		music_selector = random.randint(0, (songs_info.shape[0]-1))
-		music = mpe.AudioFileClip(os.path.join (music_path, str(songs_info.at[music_selector, 'name'])))
-		
-		 # set up a generic drop time of 5 seconds
-		music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - 5), music.duration)
+			# select an load a goal sound to play at goal
+			goal_sound = mpe.AudioFileClip(os.path.join(goal_path, 'goal0.mp3')).volumex(0.4)
 
+			# trim the music to drop when the goal is scored
+			music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - goal_time), music.duration)
+
+			# add the effects
+			music = mpe.CompositeAudioClip([music, goal_sound.set_start(goal_time), fx_sound.set_start(goal_time)])
+
+		# if a goal wasn't found
+		else:
+			# set up a generic drop time of 5 seconds
+			music = music.subclip(((int(songs_info.at[music_selector, 'dropTime'])) - 5), music.duration)
 	post_duration = post.duration
 
 	# get the endscreen
